@@ -20,6 +20,25 @@ jobs:
       - name: Install deps
         run: pip install -r requirements.txt
 
+      - name: Preflight URLs
+        shell: bash
+        env:
+          FEED_URL: ${{ secrets.FEED_URL }}
+          OVERRIDES_URL: ${{ secrets.OVERRIDES_URL }}
+        run: |
+          for V in FEED_URL OVERRIDES_URL; do
+            VAL="${!V}"
+            if [[ -z "$VAL" ]]; then
+              echo "::error::$V is empty. Set repository secret $V to a full ICS URL."
+              exit 1
+            fi
+            # webcal -> https
+            if [[ "$VAL" =~ ^webcal:// ]]; then
+              echo "::notice::Converting $V from webcal:// to https:// for fetch"
+            fi
+          done
+          mkdir -p docs
+
       - name: Merge feeds
         env:
           FEED_URL: ${{ secrets.FEED_URL }}
