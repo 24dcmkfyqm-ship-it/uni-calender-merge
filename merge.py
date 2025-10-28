@@ -7,6 +7,19 @@ FEED_URL = os.environ["FEED_URL"]          # Uni
 OVERRIDES_URL = os.environ["OVERRIDES_URL"]# Dein Kalender
 TIMEZONE = os.environ.get("TIMEZONE", "Europe/Berlin")
 
+def normalize(url: str) -> str:
+    # iCloud & Co. geben oft webcal:// – für requests -> https://
+    if url.startswith("webcal://"):
+        return "https://" + url[len("webcal://"):]
+    return url
+
+def fetch_ics(url: str) -> Calendar:
+    import requests
+    url = normalize(url)
+    r = requests.get(url, timeout=30)
+    r.raise_for_status()
+    return Calendar.from_ical(r.content)
+
 def fetch_ics(url: str) -> Calendar:
     r = requests.get(url, timeout=30)
     r.raise_for_status()
